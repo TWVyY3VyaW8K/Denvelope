@@ -29,17 +29,20 @@ namespace denvlib.Tasks
             int count = 0;
             foreach (var method in  module.GetTypes().SelectMany(type => type.Methods))
             {
-                List<Instruction> stringInstr = method.Body.Instructions.Where(instr => instr.OpCode == OpCodes.Ldstr).ToList();
-                for (int i = 0; i < stringInstr.Count; i++)
+                if (method.HasBody)
                 {
-                    byte[] stringByte = Encoding.UTF8.GetBytes(stringInstr[i].Operand as string);
-                    data.AddRange(stringByte);
-                    FieldDef field = CreateField(module);
-                    fields.Add(field, Tuple.Create(stringByte, count));
-                    method.DeclaringType.Fields.Add(field);
-                    stringInstr[i].OpCode = OpCodes.Ldsfld;
-                    stringInstr[i].Operand = field;
-                    count++;
+                    List<Instruction> stringInstr = method.Body.Instructions.Where(instr => instr.OpCode == OpCodes.Ldstr).ToList();
+                    for (int i = 0; i < stringInstr.Count; i++)
+                    {
+                        byte[] stringByte = Encoding.UTF8.GetBytes(stringInstr[i].Operand as string);
+                        data.AddRange(stringByte);
+                        FieldDef field = CreateField(module);
+                        fields.Add(field, Tuple.Create(stringByte, count));
+                        method.DeclaringType.Fields.Add(field);
+                        stringInstr[i].OpCode = OpCodes.Ldsfld;
+                        stringInstr[i].Operand = field;
+                        count++;
+                    }
                 }
             }
             staticFields = fields;
